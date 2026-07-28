@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ים אל ים">
+<meta name="theme-color" content="#0E8C84">
+<title>Trail Trainer — ים אל ים</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230E8C84'/%3E%3Cpath d='M15 70 L38 35 L52 55 L62 40 L88 70 Z' fill='%23F4F3F1'/%3E%3Ccircle cx='72' cy='28' r='9' fill='%23E4CCF7'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#232733; --paper:#F4F3F1; --paper-2:#E8E6E1; --card:#FFFFFF;
+  --olive:#0E8C84; --olive-dk:#0A6660; --olive-lt:#8FD4CD;
+  --clay:#8B2FD6; --clay-lt:#E4CCF7; --clay-dk:#6420A0;
+  --dusk:#5B3FBF; --line:#DEDBD3; --muted:#7C7A74;
+  --rest:#E1DED6; --gold:#E0955C; --danger:#C0296B;
+  --shadow: 0 6px 20px rgba(30,30,40,0.10);
+}
+body.dark{
+  --ink:#EDEBE6; --paper:#181A1E; --paper-2:#232630; --card:#1E212A;
+  --olive:#3BC2B8; --olive-dk:#1F9B8E; --olive-lt:#245C57;
+  --clay:#B25CF0; --clay-lt:#3A2050; --clay-dk:#8B2FD6;
+  --dusk:#9C7FEA; --line:#333644; --muted:#9A97A6;
+  --rest:#2A2D38; --gold:#E8A96E; --danger:#F0568E;
+  --shadow: 0 6px 20px rgba(0,0,0,0.45);
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper); color:var(--ink); font-family:'Heebo',sans-serif;
+  min-height:100vh; padding-bottom:92px; transition:background .3s,color .3s;
+}
+h1,h2,h3,.disp{font-family:'Frank Ruhl Libre',serif;}
+button{font-family:inherit;}
+
+/* HEADER */
+header{
+  background:linear-gradient(155deg,var(--olive-dk),var(--olive) 55%,var(--clay) 140%);
+  color:#F6F1E4; padding:22px 20px 26px; position:relative; overflow:hidden;
+}
+header::after{
+  content:""; position:absolute; inset:0;
+  background-image: radial-gradient(circle at 85% 15%, rgba(246,241,228,0.14), transparent 40%),
+    repeating-linear-gradient(115deg, rgba(246,241,228,0.05) 0 2px, transparent 2px 18px);
+  pointer-events:none;
+}
+.header-top{display:flex; justify-content:space-between; align-items:flex-start; position:relative; z-index:1;}
+.eyebrow{font-size:12px; letter-spacing:.12em; opacity:.85; font-weight:600; text-transform:uppercase;}
+header h1{font-size:30px; margin:4px 0 2px; font-weight:900; line-height:1.1;}
+.subline{font-size:13px; opacity:.9;}
+.gear{background:rgba(246,241,228,.16); border:1px solid rgba(246,241,228,.35); border-radius:50%; width:38px; height:38px; display:flex; align-items:center; justify-content:center; font-size:18px; cursor:pointer;}
+.today-pill{
+  display:inline-flex; align-items:center; gap:6px; background:rgba(246,241,228,0.18);
+  border:1px solid rgba(246,241,228,0.35); border-radius:999px; padding:7px 16px; font-size:13px;
+  margin-top:14px; backdrop-filter:blur(2px); position:relative; z-index:1;
+}
+.countdown-row{display:flex; gap:10px; margin-top:14px; position:relative; z-index:1;}
+.cd-box{background:rgba(246,241,228,.14); border:1px solid rgba(246,241,228,.28); border-radius:14px; padding:10px 14px; text-align:center; flex:1;}
+.cd-num{font-size:24px; font-weight:900; font-family:'Frank Ruhl Libre',serif;}
+.cd-label{font-size:11px; opacity:.85;}
+
+/* CARDS */
+.wrap{max-width:520px; margin:0 auto; padding:0 14px;}
+.card{background:var(--card); margin:14px 0; padding:18px; border-radius:18px; box-shadow:var(--shadow); border:1px solid var(--line);}
+.card h2{font-size:19px; margin:0 0 12px; display:flex; align-items:center; gap:8px;}
+.card h2 small{font-size:12px; font-weight:400; color:var(--muted); margin-inline-start:auto;}
+.row{display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--line); font-size:14.5px;}
+.row:last-child{border-bottom:none;}
+.row .label{color:var(--muted); display:flex; gap:6px; align-items:center;}
+.row .val{font-weight:600;}
+
+.progress-outer{height:16px; background:var(--paper-2); border-radius:50px; overflow:hidden; margin-top:6px;}
+.progress-inner{height:100%; background:linear-gradient(90deg,var(--olive),var(--clay)); border-radius:50px; transition:width .5s ease;}
+.metric{font-size:30px; font-weight:900; font-family:'Frank Ruhl Libre',serif;}
+.metric-sub{font-size:13px; color:var(--muted); margin-top:2px;}
+
+.btn{
+  background:var(--olive); color:#F6F1E4; padding:13px; text-align:center; border-radius:14px;
+  font-size:16px; font-weight:600; margin-top:12px; cursor:pointer; border:none; width:100%;
+}
+.btn.clay{background:var(--clay);}
+.btn.ghost{background:transparent; border:1px solid var(--line); color:var(--ink);}
+.btn.danger{background:var(--danger);}
+.btn:active{opacity:.85;}
+
+.chip{display:inline-block; padding:3px 10px; border-radius:999px; font-size:11.5px; font-weight:600;}
+.chip.type-walk{background:#D4EEEB; color:var(--olive-dk);}
+.chip.type-strength{background:#DCD3F5; color:var(--dusk);}
+.chip.type-climb{background:var(--clay-lt); color:var(--clay-dk);}
+.chip.type-rest{background:var(--rest); color:var(--muted);}
+.chip.type-trail{background:#EAC9F5; color:var(--clay-dk);}
+.chip.type-recovery{background:#D4EEEB; color:var(--olive-dk);}
+.chip.type-simulation{background:var(--clay); color:#fff;}
+.chip.type-taper{background:#F0DDC8; color:var(--gold);}
+.chip.type-depart{background:var(--gold); color:#3a1a05;}
+body.dark .chip{filter:brightness(1.15);}
+
+.week-list .row{cursor:pointer;}
+.week-list .row.done .val, .week-list .row.done .label{opacity:.55; text-decoration:line-through;}
+.checkbox{width:22px; height:22px; border-radius:7px; border:2px solid var(--olive); display:flex; align-items:center; justify-content:center; font-size:14px; flex:none;}
+.checkbox.checked{background:var(--olive); color:#fff;}
+
+/* NAV */
+.tabbar{
+  position:fixed; bottom:0; inset-inline:0; background:var(--card); border-top:1px solid var(--line);
+  display:flex; padding:8px 10px calc(8px + env(safe-area-inset-bottom)); z-index:50;
+}
+.tab{flex:1; text-align:center; padding:6px 0; cursor:pointer; color:var(--muted); font-size:11px;}
+.tab .ico{font-size:21px; display:block;}
+.tab.active{color:var(--clay); font-weight:700;}
+
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* CALENDAR */
+.cal-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;}
+.cal-nav .cbtn{font-size:20px; background:var(--paper-2); border:none; width:36px; height:36px; border-radius:10px; cursor:pointer; color:var(--ink);}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:5px; text-align:center;}
+.cal-dow{font-size:11px; color:var(--muted); padding-bottom:4px;}
+.cal-day{
+  aspect-ratio:1; border-radius:11px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-size:13px; background:var(--paper-2); cursor:pointer; position:relative; border:2px solid transparent;
+}
+.cal-day.empty{background:transparent; cursor:default;}
+.cal-day .dot{width:6px; height:6px; border-radius:50%; margin-top:2px;}
+.cal-day.today{border-color:var(--clay);}
+.cal-day.done{background:var(--olive); color:#fff;}
+.cal-day.done .dot{background:#fff;}
+.legend{display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; font-size:11.5px;}
+.legend span{display:flex; align-items:center; gap:5px;}
+.legend i{width:9px; height:9px; border-radius:50%; display:inline-block;}
+
+/* MODAL */
+.overlay{position:fixed; inset:0; background:rgba(20,20,15,.55); display:none; align-items:flex-end; z-index:100;}
+.overlay.open{display:flex;}
+.sheet{background:var(--card); width:100%; border-radius:22px 22px 0 0; padding:22px; max-height:85vh; overflow-y:auto;}
+.sheet-handle{width:40px; height:4px; background:var(--line); border-radius:3px; margin:0 auto 14px;}
+.field{margin-top:12px;}
+.field label{font-size:12.5px; color:var(--muted); display:block; margin-bottom:5px;}
+.field input, .field textarea{
+  width:100%; padding:11px; border-radius:10px; border:1px solid var(--line); background:var(--paper-2);
+  color:var(--ink); font-family:inherit; font-size:14px;
+}
+
+/* CHARTS */
+.chart-wrap{overflow-x:auto;}
+svg text{font-family:'Heebo',sans-serif; fill:var(--ink);}
+.badge-grid{display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-top:6px;}
+.badge{background:var(--paper-2); border-radius:14px; padding:12px; text-align:center; opacity:.4;}
+.badge.earned{opacity:1; background:linear-gradient(150deg,var(--clay-lt),var(--paper-2));}
+.badge .ico{font-size:24px;}
+.badge .txt{font-size:11.5px; margin-top:4px; font-weight:600;}
+
+.toast{position:fixed; bottom:100px; inset-inline:0; display:flex; justify-content:center; z-index:200; pointer-events:none;}
+.toast span{background:var(--olive-dk); color:#fff; padding:10px 18px; border-radius:999px; font-size:13px; opacity:0; transform:translateY(10px); transition:.25s;}
+.toast span.show{opacity:1; transform:translateY(0);}
+
+.small-note{font-size:12px; color:var(--muted); line-height:1.6; margin-top:8px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div>
+      <div class="eyebrow">Trail Trainer</div>
+      <h1>🏔 ים אל ים</h1>
+      <div class="subline">תוכנית אימונים · יעד 12/11/2026</div>
+    </div>
+    <div class="gear" onclick="openSettings()">⚙️</div>
+  </div>
+  <div class="countdown-row">
+    <div class="cd-box"><div class="cd-num" id="cdDays">–</div><div class="cd-label">ימים ליציאה</div></div>
+    <div class="cd-box"><div class="cd-num" id="cdWeek">–</div><div class="cd-label">שבוע נוכחי</div></div>
+    <div class="cd-box"><div class="cd-num" id="cdPct">–</div><div class="cd-label">מהתוכנית הושלם</div></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+
+    <div class="card" id="nextWorkoutCard">
+      <h2>🎯 האימון הבא</h2>
+    </div>
+
+    <div class="card">
+      <h2>📅 השבוע <small id="weekRangeLabel"></small></h2>
+      <div class="week-list" id="weekList"></div>
+    </div>
+
+    <div class="card">
+      <h2>📈 התקדמות</h2>
+      <div class="metric" id="kmProgress">0 / 0 ק"מ</div>
+      <div class="progress-outer"><div class="progress-inner" id="kmBar" style="width:0%"></div></div>
+      <div class="metric-sub" id="kmProgressSub"></div>
+    </div>
+
+    <div class="card">
+      <h2>🏔 Trail Readiness</h2>
+      <div class="metric" id="readinessScore">0%</div>
+      <div class="progress-outer"><div class="progress-inner" id="readinessBar" style="width:0%"></div></div>
+      <div id="readinessBullets" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>🎒 משקל תיק נוכחי</h2>
+      <div class="metric" id="packWeight">0 ק"ג</div>
+      <div class="metric-sub" id="packWeightSub"></div>
+    </div>
+
+  </div>
+
+  <!-- CALENDAR -->
+  <div class="screen" id="screen-cal">
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cbtn" onclick="calShift(-1)">‹</button>
+        <h2 id="calMonthLabel" style="margin:0;"></h2>
+        <button class="cbtn" onclick="calShift(1)">›</button>
+      </div>
+      <div class="cal-grid" id="calGrid"></div>
+      <div class="legend" id="calLegend"></div>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="screen" id="screen-stats">
+    <div class="card">
+      <h2>📊 ק"מ שבועי</h2>
+      <div class="chart-wrap"><svg id="chartWeekly" width="900" height="180"></svg></div>
+    </div>
+    <div class="card">
+      <h2>📈 ק"מ מצטבר</h2>
+      <div class="chart-wrap"><svg id="chartCumulative" width="900" height="180"></svg></div>
+    </div>
+    <div class="card">
+      <h2>🎒 עליית משקל תיק</h2>
+      <div class="chart-wrap"><svg id="chartPack" width="900" height="140"></svg></div>
+    </div>
+    <div class="card">
+      <h2>🏆 הישגים</h2>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="tabbar">
+  <div class="tab active" data-tab="home" onclick="switchTab('home')"><span class="ico">🏠</span>בית</div>
+  <div class="tab" data-tab="cal" onclick="switchTab('cal')"><span class="ico">📅</span>לוח שנה</div>
+  <div class="tab" data-tab="stats" onclick="switchTab('stats')"><span class="ico">📊</span>סטטיסטיקה</div>
+</div>
+
+<!-- DAY MODAL -->
+<div class="overlay" id="dayOverlay" onclick="if(event.target===this)closeDay()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div id="dayModalContent"></div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h2>⚙️ הגדרות</h2>
+    <div class="row">
+      <div class="label">🌙 מצב כהה</div>
+      <div class="checkbox" id="darkToggle" onclick="toggleDark()">✓</div>
+    </div>
+    <button class="btn danger" onclick="resetData()">איפוס כל הנתונים</button>
+    <div class="small-note">
+      <b>לגבי התוכנית:</b> שבועות 1–4 בנויים בדיוק לפי התוכנית שקיבלת מהמאמן. משקלי התיק (שבועות 5–15), דפוס "שישי–שבת" של אוקטובר (הליכה ארוכה + טיפוס + תיק) והסימולציה הסופית בתחילת נובמבר — לקוחים מילולית מהתוכנית. הימים המדויקים בין שבוע 5 לשבוע 14 נבנו אוטומטית לפי אותם עקרונות (5 אימונים בשבוע, שבוע התאוששות כל 4 שבועות, עלייה הדרגתית לכ-40–45 ק"מ בשבוע) מכיוון שטבלה יומית מפורטת לא סופקה לתקופה הזו. אפשר לערוך כל אימון ידנית דרך לוח השנה.
+    </div>
+  </div>
+</div>
+
+<div class="toast"><span id="toastMsg"></span></div>
+
+<script>
+/* ================= DATE HELPERS ================= */
+const HDOW = ["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+function addDays(dateStr, n){ const dt=new Date(dateStr+"T00:00:00"); dt.setDate(dt.getDate()+n); return dt.toISOString().slice(0,10); }
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(dateStr){ const dt=new Date(dateStr+"T00:00:00"); return dt.toLocaleDateString('he-IL',{day:'numeric',month:'numeric'}); }
+function dowName(dateStr){ return HDOW[new Date(dateStr+"T00:00:00").getDay()]; }
+
+/* ================= PLAN GENERATION ================= */
+const TARGET_DATE = "2026-11-12";
+const PLAN_START = "2026-07-27";
+
+function mkWeek(n, start, o){
+  const items = [
+    {off:0, type:'walk', title:'הליכה מהירה', km:o.mon, hr:'120–135'},
+    {off:1, type:'strength', title:'אימון כוח'+(o.recovery?' (קל)':''), duration:o.strengthDur||45},
+    {off:2, type:'climb', title:o.wedTitle||'עליות / מדרגות', duration:o.wedDur},
+    {off:3, type:'rest', title:'מנוחה'},
+    {off:4, type:'walk', title:'הליכה', km:o.fri, climb:o.friClimb, pack:o.pack},
+    {off:5, type:'trail', title:'שטח', km:o.sat, climb:o.satClimb, pack:o.pack},
+    {off:6, type:'recovery', title:'התאוששות', duration:20, note:'מתיחות'}
+  ];
+  return items.map(it=>{
+    const day = {...it};
+    day.weekNum = n; day.date = addDays(start, it.off); day.recoveryWeek = !!o.recovery;
+    return day;
+  });
+}
+
+let PLAN = [];
+PLAN = PLAN.concat(mkWeek(1,"2026-07-27",{mon:6, wedTitle:'מדרגות', wedDur:30, fri:8, sat:12, satClimb:200, pack:0}));
+PLAN = PLAN.concat(mkWeek(2,"2026-08-03",{mon:7, wedTitle:'מדרגות', wedDur:35, fri:9, sat:14, satClimb:250, pack:0}));
+PLAN = PLAN.concat(mkWeek(3,"2026-08-10",{mon:8, wedTitle:'עליות', wedDur:40, fri:10, sat:16, satClimb:300, pack:0}));
+PLAN = PLAN.concat(mkWeek(4,"2026-08-17",{mon:6, wedTitle:'מדרגות', wedDur:30, fri:8, sat:12, satClimb:200, pack:0, recovery:true, strengthDur:30}));
+PLAN = PLAN.concat(mkWeek(5,"2026-08-24",{mon:8, wedTitle:'עליות', wedDur:35, fri:10, sat:14, satClimb:300, pack:3}));
+PLAN = PLAN.concat(mkWeek(6,"2026-08-31",{mon:8, wedTitle:'עליות', wedDur:40, fri:11, sat:17, satClimb:350, pack:3}));
+PLAN = PLAN.concat(mkWeek(7,"2026-09-07",{mon:9, wedTitle:'עליות', wedDur:45, fri:12, sat:19, satClimb:400, pack:5}));
+PLAN = PLAN.concat(mkWeek(8,"2026-09-14",{mon:7, wedTitle:'עליות', wedDur:30, fri:9,  sat:14, satClimb:300, pack:5, recovery:true, strengthDur:30}));
+PLAN = PLAN.concat(mkWeek(9,"2026-09-21",{mon:9, wedTitle:'עליות', wedDur:45, fri:13, sat:20, satClimb:450, pack:6}));
+PLAN = PLAN.concat(mkWeek(10,"2026-09-28",{mon:9, wedTitle:'עליות', wedDur:50, fri:13, sat:22, satClimb:500, pack:6}));
+PLAN = PLAN.concat(mkWeek(11,"2026-10-05",{mon:8, wedTitle:'עליות', wedDur:45, fri:22, friClimb:700, sat:16, pack:7}));
+PLAN = PLAN.concat(mkWeek(12,"2026-10-12",{mon:6, wedTitle:'עליות', wedDur:35, fri:18, friClimb:600, sat:14, pack:7, recovery:true, strengthDur:30}));
+PLAN = PLAN.concat(mkWeek(13,"2026-10-19",{mon:9, wedTitle:'עליות', wedDur:50, fri:25, friClimb:850, sat:19, pack:8}));
+PLAN = PLAN.concat(mkWeek(14,"2026-10-26",{mon:9, wedTitle:'עליות', wedDur:50, fri:26, friClimb:900, sat:20, pack:9}));
+
+// Week 15 — final simulation (2–8/11)
+PLAN = PLAN.concat([
+  {weekNum:15, date:"2026-11-02", type:'taper', title:'הליכה קלה', km:5},
+  {weekNum:15, date:"2026-11-03", type:'strength', title:'כוח קל', duration:25},
+  {weekNum:15, date:"2026-11-04", type:'rest', title:'מנוחה / ניידות'},
+  {weekNum:15, date:"2026-11-05", type:'rest', title:'מנוחה'},
+  {weekNum:15, date:"2026-11-06", type:'simulation', title:'סימולציה — יום 1', km:30, climb:1000, pack:10},
+  {weekNum:15, date:"2026-11-07", type:'simulation', title:'סימולציה — יום 2', km:20, pack:10},
+  {weekNum:15, date:"2026-11-08", type:'recovery', title:'התאוששות מלאה', note:'מתיחות + שינה'}
+]);
+
+// Week 16 — exit week (9–12/11, partial)
+PLAN = PLAN.concat([
+  {weekNum:16, date:"2026-11-09", type:'taper', title:'הליכה קלה', km:5},
+  {weekNum:16, date:"2026-11-10", type:'rest', title:'מנוחה + מתיחות'},
+  {weekNum:16, date:"2026-11-11", type:'rest', title:'ניידות קלה + שתייה מרובה'},
+  {weekNum:16, date:"2026-11-12", type:'depart', title:'🎒 יציאה למסלול — ים אל ים!', note:'בהצלחה!'}
+]);
+
+const PLAN_MAP = {};
+PLAN.forEach(d=>PLAN_MAP[d.date]=d);
+const TOTAL_KM = PLAN.reduce((s,d)=>s+(d.km||0),0);
+
+const TYPE_LABEL = {walk:'הליכה',strength:'כוח',climb:'עליות',rest:'מנוחה',trail:'שטח',recovery:'התאוששות',simulation:'סימולציה',taper:'שימור',depart:'יציאה'};
+const TYPE_ICON = {walk:'🚶',strength:'💪',climb:'🧗',rest:'😴',trail:'🥾',recovery:'🧘',simulation:'🏔',taper:'🌿',depart:'🎒'};
+const TYPE_COLOR = {walk:'#0E8C84',strength:'#5B3FBF',climb:'#8B2FD6',rest:'#DEDBD3',trail:'#6420A0',recovery:'#3BC2B8',simulation:'#8B2FD6',taper:'#E0955C',depart:'#E0955C'};
+
+/* ================= STORAGE ================= */
+const STORE_KEY='trailtrainer_progress_v1';
+const THEME_KEY='trailtrainer_theme';
+function loadProgress(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||{}; }catch(e){ return {}; } }
+function saveProgress(p){ localStorage.setItem(STORE_KEY, JSON.stringify(p)); }
+let PROGRESS = loadProgress();
+
+function isDone(date){ return !!(PROGRESS[date] && PROGRESS[date].done); }
+function markDone(date, done, extra){
+  PROGRESS[date] = {...(PROGRESS[date]||{}), done, ...(extra||{})};
+  saveProgress(PROGRESS);
+}
+
+/* ================= THEME ================= */
+function toggleDark(){
+  const dark = document.body.classList.toggle('dark');
+  localStorage.setItem(THEME_KEY, dark?'dark':'light');
+  document.getElementById('darkToggle').classList.toggle('checked', dark);
+  renderCharts();
+}
+(function initTheme(){
+  if(localStorage.getItem(THEME_KEY)==='dark'){ document.body.classList.add('dark'); }
+})();
+
+/* ================= TABS ================= */
+function switchTab(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
+  if(name==='stats') renderCharts();
+  if(name==='cal') renderCalendar();
+}
+
+/* ================= HOME RENDER ================= */
+function weekKey(dateStr){ const d=PLAN_MAP[dateStr]; return d?d.weekNum:null; }
+
+function renderHome(){
+  const today = todayStr();
+  // countdown
+  const dt1=new Date(today+"T00:00:00"), dt2=new Date(TARGET_DATE+"T00:00:00");
+  const daysLeft = Math.max(0, Math.round((dt2-dt1)/86400000));
+  document.getElementById('cdDays').textContent = daysLeft;
+  const curDay = PLAN_MAP[today];
+  const curWeek = curDay ? curDay.weekNum : (today < PLAN_START ? 0 : PLAN[PLAN.length-1].weekNum);
+  document.getElementById('cdWeek').textContent = curWeek || '–';
+  const doneCount = PLAN.filter(d=>isDone(d.date)).length;
+  document.getElementById('cdPct').textContent = Math.round(doneCount/PLAN.length*100)+'%';
+
+  // next workout: today's if scheduled & not done, else next upcoming
+  let next = PLAN.find(d=>d.date===today && !isDone(d.date));
+  if(!next) next = PLAN.find(d=>d.date>=today && !isDone(d.date));
+  if(!next) next = PLAN[PLAN.length-1];
+  document.getElementById('nextWorkoutCard').innerHTML = renderNextCard(next);
+
+  // week overview
+  const wk = next.weekNum;
+  const weekDays = PLAN.filter(d=>d.weekNum===wk);
+  document.getElementById('weekRangeLabel').textContent = weekDays.length? `${fmtDate(weekDays[0].date)}–${fmtDate(weekDays[weekDays.length-1].date)}` : '';
+  document.getElementById('weekList').innerHTML = weekDays.map(d=>{
+    const done = isDone(d.date);
+    return `<div class="row" onclick="openDay('${d.date}')">
+      <div class="label">${done?'✔':'⬜'} ${dowName(d.date)} <span class="chip type-${d.type}">${TYPE_ICON[d.type]} ${TYPE_LABEL[d.type]}</span></div>
+      <div class="val">${d.km? d.km+' ק"מ' : (d.duration? d.duration+' דק׳' : '')}</div>
+    </div>`;
+  }).join('');
+
+  // progress bar (km up to today, completed)
+  const doneKm = PLAN.filter(d=>isDone(d.date)).reduce((s,d)=>s+(PROGRESS[d.date]&&PROGRESS[d.date].km!=null? Number(PROGRESS[d.date].km) : (d.km||0)),0);
+  document.getElementById('kmProgress').textContent = `${doneKm} / ${TOTAL_KM} ק"מ`;
+  document.getElementById('kmBar').style.width = Math.min(100, doneKm/TOTAL_KM*100)+'%';
+  document.getElementById('kmProgressSub').textContent = `${Math.round(doneKm/TOTAL_KM*100)}% מסך התוכנית עד ליציאה`;
+
+  // readiness
+  const r = computeReadiness(today);
+  document.getElementById('readinessScore').textContent = r.score+'%';
+  document.getElementById('readinessBar').style.width = r.score+'%';
+  document.getElementById('readinessBullets').innerHTML = r.bullets.map(b=>`<div style="font-size:13.5px; margin-top:4px;">${b.ok?'✔':'▫'} ${b.text}</div>`).join('');
+
+  // pack weight
+  const packDay = [...PLAN].filter(d=>d.date<=today && d.pack!=null).pop();
+  const pack = packDay ? packDay.pack : 0;
+  document.getElementById('packWeight').textContent = pack+' ק"ג';
+  document.getElementById('packWeightSub').textContent = pack===0? 'עדיין ללא תיק (שבועות 1–4)' : (pack>=10? 'משקל מלא של המסלול' : `שלב נוכחי בהדרגה לקראת ~10 ק"ג`);
+}
+
+function renderNextCard(d){
+  const rows = [];
+  if(d.km) rows.push(row('🚶 מרחק', d.km+' ק"מ'));
+  if(d.hr) rows.push(row('❤️ דופק', d.hr));
+  if(d.pack) rows.push(row('🎒 תיק', d.pack+' ק"ג'));
+  if(d.climb) rows.push(row('⛰ טיפוס', d.climb+' מ׳'));
+  if(d.duration) rows.push(row('⏱ משך', d.duration+' דק׳'));
+  if(d.note) rows.push(row('📝 הערה', d.note));
+  const done = isDone(d.date);
+  return `<h2>🎯 האימון הבא <small>${dowName(d.date)} ${fmtDate(d.date)}</small></h2>
+    <div class="chip type-${d.type}" style="margin-bottom:8px;">${TYPE_ICON[d.type]} ${d.title}</div>
+    <table style="width:100%; border-collapse:collapse;">${rows.join('')}</table>
+    <div class="btn ${done?'ghost':''}" onclick="openDay('${d.date}')">${done? '✔ בוצע — צפייה' : '▶ סמן כבוצע'}</div>`;
+  function row(l,v){ return `<tr><td style="padding:8px 0; border-bottom:1px solid var(--line); color:var(--muted);">${l}</td><td style="padding:8px 0; border-bottom:1px solid var(--line); text-align:left; font-weight:600;">${v}</td></tr>`; }
+}
+
+/* ================= READINESS ================= */
+function computeReadiness(today){
+  const past14 = PLAN.filter(d=> d.date<=today && d.date>=addDays(today,-14) && d.type!=='rest');
+  const doneInPast14 = past14.filter(d=>isDone(d.date));
+  const compA = past14.length? (doneInPast14.length/past14.length)*60 : 30;
+
+  // streak of consecutive done non-rest days up to today
+  let streak=0;
+  let cursor = today;
+  for(let i=0;i<60;i++){
+    const d = PLAN_MAP[cursor];
+    if(!d) break;
+    if(d.type==='rest'){ cursor=addDays(cursor,-1); continue; }
+    if(isDone(cursor)){ streak++; cursor=addDays(cursor,-1); } else break;
+  }
+  const compB = Math.min(streak,7)/7*20;
+
+  const doneAll = PLAN.filter(d=>d.date<=today);
+  const doneAllCompleted = doneAll.filter(d=>isDone(d.date));
+  const compC = doneAll.length? (doneAllCompleted.length/doneAll.length)*20 : 10;
+
+  const score = Math.round(Math.max(0,Math.min(100, compA+compB+compC)));
+  const bullets = [
+    {ok: compA>=36, text:'עומס אימונים מתאים בשבועיים האחרונים'},
+    {ok: compB>=8, text:'רצף אימונים טוב'},
+    {ok: compC>=12, text:'עמידה כללית בתוכנית עד כה'},
+    {ok: score>=60, text:'מוכן לאימון הבא'}
+  ];
+  return {score, bullets};
+}
+
+/* ================= DAY MODAL ================= */
+/* ================= WHAT TO ACTUALLY DO ================= */
+const STRENGTH_BASE = [
+  {name:'סקוואט', sets:3, reps:15},
+  {name:'מכרעיים (לאנג׳ים) לכל רגל', sets:3, reps:12},
+  {name:'עליות מדרגה', sets:3, reps:15},
+  {name:'הרמות תאומים', sets:3, reps:20},
+  {name:'פלאנק', sets:3, seconds:60},
+  {name:'פלאנק צד — לכל צד', sets:3, seconds:45},
+  {name:'גשר ישבן', sets:3, reps:15}
+];
+function activityList(d){
+  if(d.type==='strength'){
+    const lighter = !!d.recoveryWeek;
+    return STRENGTH_BASE.map(e=>{
+      const sets = lighter? Math.max(2, e.sets-1) : e.sets;
+      const unit = e.reps? `${e.reps}` : `${e.seconds} שנ׳`;
+      return `${e.name} — ${sets}×${unit}`;
+    });
+  }
+  if(d.type==='climb'){
+    const dur = d.duration||30;
+    if((d.title||'').includes('מדרגות')){
+      return [
+        `${dur} דקות: עליות מדרגות בקצב נמרץ, ירידה רגועה — לסירוגין`,
+        'שמור על גב זקוף וברך מעל הקרסול בעלייה',
+        'שתייה קלה כל כ-10 דקות'
+      ];
+    }
+    return [
+      `${dur} דקות הליכת עליות בשטח/גבעה בעצימות בינונית-גבוהה`,
+      'צעדים קצרים ויציבים בירידה כדי להגן על הברכיים',
+      'אפשר לשלב מקלות הליכה לתרגול טכניקה'
+    ];
+  }
+  if(d.type==='walk'){
+    return [
+      'קצב שבו עדיין אפשר לנהל שיחה (לא ספרינט)',
+      'נעל את הנעליים והתיק שאיתם תלך בפועל במסלול',
+      d.pack? `הרכב תיק במשקל ${d.pack} ק"ג בצורה מאוזנת על הגב` : null
+    ].filter(Boolean);
+  }
+  if(d.type==='trail' || d.type==='simulation'){
+    return [
+      'התחל לאט ובנה קצב בהדרגה — אל תצא חזק מדי',
+      'עצירת מים קצרה כל 45–60 דקות',
+      d.pack? `תיק במשקל ${d.pack} ק"ג — ודא שהוא מותאם ולא מתנדנד` : null,
+      'שים לב לאיתותי עייפות בברכיים/כפות רגליים ועצור אם יש כאב חד'
+    ].filter(Boolean);
+  }
+  if(d.type==='recovery'){
+    return ['מתיחות לירכיים, שוקיים וגב תחתון — 20 דקות', 'נשימות עמוקות / רולר קצף אם יש'];
+  }
+  if(d.type==='taper'){
+    return ['הליכה קלה בלבד, בלי לדחוף קצב', 'שתייה מרובה ושינה טובה השבוע'];
+  }
+  if(d.type==='depart'){
+    return ['בדוק ציוד ומים בערב הקודם', 'ארוחה קלה ומזינה לפני היציאה', 'צא בקצב נוח — יש עוד הרבה ימים'];
+  }
+  return [];
+}
+
+
+function goalText(d){
+  const wk = d.weekNum;
+  switch(d.type){
+    case 'walk':
+      if(wk<=4) return 'בניית בסיס אירובי והרגלת הגוף להליכה סדירה — שלב יסודות לפני העלאת עומסים.';
+      if(wk<=10) return 'שמירה על נפח אירובי בין האימונים הגדולים, ותרגול קצב הליכה יציב בדופק נמוך-בינוני.';
+      return 'תנועה קלה בלבד, כדי לשמור על הרגליים רעננות לקראת סוף השבוע.';
+    case 'strength':
+      return 'חיזוק ליבה, ישבן וברכיים — מפחית סיכון לפציעה בירידות ומאריך את הסיבולת בשטח לאורך ימים רצופים.';
+    case 'climb':
+      return 'בניית כוח אקסצנטרי בברכיים ובקרסוליים לעליות ולירידות — בדיוק מה שיידרש במסלול ים אל ים.';
+    case 'rest':
+      return 'מנוחה מלאה. כאן הגוף בונה את הכושר בפועל ומתאושש מהעומס המצטבר — לא באימון עצמו.';
+    case 'trail':
+      if(d.pack) return 'אימון שטח עם תיק — מרגיל את הגוף לנשיאת משקל למרחקים ארוכים ומדמה תנאי מסלול אמיתיים.';
+      return 'אימון שטח ארוך — בונה סיבולת לטווח ארוך ומכין את הגוף לעומס המצטבר של ימי הליכה רצופים.';
+    case 'recovery':
+      return 'מתיחות והתאוששות פעילה, כדי להיכנס לשבוע הבא רענן וללא כאבי שרירים מצטברים.';
+    case 'simulation':
+      return d.title.includes('1') ?
+        'סימולציה מלאה של יום מסלול — מרחק, טיפוס ומשקל תיק קרובים ככל האפשר לתנאי המסלול בפועל.' :
+        'הבחינה האמיתית: הליכה נוספת על רגליים עייפות מהיום הקודם — בדיוק כמו יום שני רצוף במסלול.';
+    case 'taper':
+      return 'שבוע שימור — תנועה קלה בלבד כדי להגיע ליום היציאה רענן, בלי לצבור עייפות מיותרת.';
+    case 'depart':
+      return 'יום היציאה למסלול! כל ההכנה הובילה לרגע הזה. שתייה, ציוד בדוק וקצב נעים — בהצלחה! 🎒';
+    default: return '';
+  }
+}
+function estimateDuration(d){
+  if(!d.km) return null;
+  let speed = 4.3;
+  if(d.type==='trail'||d.type==='simulation') speed -= 0.4;
+  if(d.pack) speed -= Math.min(0.6, d.pack*0.05);
+  speed = Math.max(2.2, speed);
+  let hours = d.km/speed;
+  if(d.climb) hours += (d.climb/100)*(9/60);
+  const h = Math.floor(hours);
+  const m = Math.round((hours-h)*60);
+  return `כ-${h}:${String(m).padStart(2,'0')} שעות`;
+}
+
+function openDay(date){
+
+  const d = PLAN_MAP[date];
+  if(!d) return;
+  const p = PROGRESS[date]||{};
+  document.getElementById('dayModalContent').innerHTML = `
+    <h2>${dowName(date)}, ${fmtDate(date)} <small style="font-size:12px;color:var(--muted);">שבוע ${d.weekNum}</small></h2>
+    <div class="chip type-${d.type}">${TYPE_ICON[d.type]} ${d.title}</div>
+    ${activityList(d).length? `<div style="margin-top:12px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px;">
+      <div style="font-weight:700; margin-bottom:8px; display:flex; align-items:center; gap:6px;">📋 מה לעשות בפועל</div>
+      <ul style="margin:0; padding-inline-start:18px; font-size:13.5px; line-height:1.9;">
+        ${activityList(d).map(a=>`<li>${a}</li>`).join('')}
+      </ul>
+    </div>`:''}
+    <div style="margin-top:10px; background:var(--paper-2); border-radius:14px; padding:14px;">
+      <div style="font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:6px;">🎯 מטרת האימון</div>
+      <div style="font-size:13.5px; line-height:1.65;">${goalText(d)}</div>
+      ${estimateDuration(d)? `<div style="margin-top:10px; font-size:13px; color:var(--muted); display:flex; align-items:center; gap:6px;">⏱ צפי אימון: ${estimateDuration(d)}</div>`:''}
+    </div>
+    <div style="margin-top:10px;">
+      ${d.km? `<div class="row"><div class="label">🚶 מרחק מתוכנן</div><div class="val">${d.km} ק"מ</div></div>`:''}
+      ${d.climb? `<div class="row"><div class="label">⛰ טיפוס</div><div class="val">${d.climb} מ׳</div></div>`:''}
+      ${d.pack? `<div class="row"><div class="label">🎒 תיק</div><div class="val">${d.pack} ק"ג</div></div>`:''}
+      ${d.duration? `<div class="row"><div class="label">⏱ משך</div><div class="val">${d.duration} דק׳</div></div>`:''}
+      ${d.hr? `<div class="row"><div class="label">❤️ דופק יעד</div><div class="val">${d.hr}</div></div>`:''}
+    </div>
+    <div class="field"><label>מרחק בפועל (ק"מ)</label><input type="number" id="inKm" value="${p.km!=null?p.km:(d.km||'')}"></div>
+    <div class="field"><label>דופק ממוצע</label><input type="text" id="inHr" value="${p.hr||''}"></div>
+    <div class="field"><label>הערות</label><textarea id="inNote" rows="2">${p.notes||''}</textarea></div>
+    <div class="btn ${isDone(date)?'ghost':''}" onclick="toggleDone('${date}')">${isDone(date)?'✔ בוצע — לחץ לביטול':'✔ סמן כבוצע ושמור'}</div>
+    <div class="btn ghost" onclick="closeDay()">סגור</div>
+  `;
+  document.getElementById('dayOverlay').classList.add('open');
+}
+function toggleDone(date){
+  const km = document.getElementById('inKm').value;
+  const hr = document.getElementById('inHr').value;
+  const notes = document.getElementById('inNote').value;
+  const willBeDone = !isDone(date);
+  markDone(date, willBeDone, {km: km?Number(km):null, hr, notes});
+  closeDay();
+  showToast(willBeDone? 'האימון סומן כבוצע 💪' : 'הסימון בוטל');
+  renderAll();
+}
+function closeDay(){ document.getElementById('dayOverlay').classList.remove('open'); }
+
+function openSettings(){
+  document.getElementById('darkToggle').classList.toggle('checked', document.body.classList.contains('dark'));
+  document.getElementById('settingsOverlay').classList.add('open');
+}
+function closeSettings(){ document.getElementById('settingsOverlay').classList.remove('open'); }
+function resetData(){
+  if(confirm('לאפס את כל נתוני ההתקדמות? הפעולה בלתי הפיכה.')){
+    localStorage.removeItem(STORE_KEY);
+    PROGRESS = {};
+    closeSettings();
+    showToast('הנתונים אופסו');
+    renderAll();
+  }
+}
+function showToast(msg){
+  const t=document.getElementById('toastMsg');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+/* ================= CALENDAR ================= */
+let calCursor = new Date(todayStr()+"T00:00:00");
+if(calCursor < new Date(PLAN_START+"T00:00:00")) calCursor = new Date(PLAN_START+"T00:00:00");
+function calShift(n){ calCursor.setMonth(calCursor.getMonth()+n); renderCalendar(); }
+
+function renderCalendar(){
+  const y=calCursor.getFullYear(), m=calCursor.getMonth();
+  document.getElementById('calMonthLabel').textContent = calCursor.toLocaleDateString('he-IL',{month:'long',year:'numeric'});
+  const first = new Date(y,m,1);
+  const startOffset = first.getDay(); // 0=Sun
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  let html = HDOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<startOffset;i++) html+=`<div class="cal-day empty"></div>`;
+  const today = todayStr();
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const d = PLAN_MAP[dateStr];
+    const done = isDone(dateStr);
+    let cls='cal-day';
+    if(dateStr===today) cls+=' today';
+    if(done) cls+=' done';
+    const dot = d? `<div class="dot" style="background:${TYPE_COLOR[d.type]}"></div>` : '';
+    html += `<div class="${cls}" onclick="${d? `openDay('${dateStr}')`:''}">${day}${dot}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML = html;
+  const legendTypes = ['walk','strength','climb','trail','rest','simulation','depart'];
+  document.getElementById('calLegend').innerHTML = legendTypes.map(t=>`<span><i style="background:${TYPE_COLOR[t]}"></i>${TYPE_ICON[t]} ${TYPE_LABEL[t]}</span>`).join('');
+}
+
+/* ================= CHARTS ================= */
+function svgEl(tag,attrs){ const el=document.createElementNS('http://www.w3.org/2000/svg',tag); for(const k in attrs) el.setAttribute(k,attrs[k]); return el; }
+
+function renderCharts(){
+  renderWeeklyChart(); renderCumulativeChart(); renderPackChart(); renderBadges();
+}
+
+function weeklyTotals(){
+  const totals = {};
+  PLAN.forEach(d=>{ totals[d.weekNum] = (totals[d.weekNum]||0) + (d.km||0); });
+  return Object.keys(totals).sort((a,b)=>a-b).map(k=>({week:Number(k), km:totals[k]}));
+}
+
+function renderWeeklyChart(){
+  const svg = document.getElementById('chartWeekly'); svg.innerHTML='';
+  const data = weeklyTotals();
+  const W=data.length*54+40, H=170;
+  svg.setAttribute('width', W); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const maxKm = Math.max(...data.map(d=>d.km));
+  const styleColor = getComputedStyle(document.body);
+  data.forEach((d,i)=>{
+    const x = 30 + i*54;
+    const h = d.km/maxKm*110;
+    const recoveryWk = PLAN.find(p=>p.weekNum===d.week && p.recoveryWeek);
+    svg.appendChild(svgEl('rect',{x, y:130-h, width:34, height:h, rx:6, fill: recoveryWk? styleColor.getPropertyValue('--olive-lt') : styleColor.getPropertyValue('--clay')}));
+    const t1=svgEl('text',{x:x+17, y:145, 'text-anchor':'middle', 'font-size':'10'}); t1.textContent='ש'+d.week; svg.appendChild(t1);
+    const t2=svgEl('text',{x:x+17, y:122-h, 'text-anchor':'middle', 'font-size':'10', 'font-weight':'700'}); t2.textContent=d.km; svg.appendChild(t2);
+  });
+}
+
+function renderCumulativeChart(){
+  const svg = document.getElementById('chartCumulative'); svg.innerHTML='';
+  const data = weeklyTotals();
+  let run=0; const cum = data.map(d=>({week:d.week, km: (run+=d.km)}));
+  const W=data.length*54+40, H=170;
+  svg.setAttribute('width', W); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const maxKm = cum[cum.length-1].km;
+  const styleColor = getComputedStyle(document.body);
+  const points = cum.map((d,i)=>{ const x=30+i*54+17; const y=140-(d.km/maxKm*110); return `${x},${y}`; });
+  const poly = svgEl('polyline',{points:points.join(' '), fill:'none', stroke: styleColor.getPropertyValue('--olive'), 'stroke-width':3});
+  svg.appendChild(poly);
+  cum.forEach((d,i)=>{
+    const x=30+i*54+17, y=140-(d.km/maxKm*110);
+    svg.appendChild(svgEl('circle',{cx:x, cy:y, r:4, fill: styleColor.getPropertyValue('--clay')}));
+    const t=svgEl('text',{x, y:158, 'text-anchor':'middle', 'font-size':'10'}); t.textContent='ש'+d.week; svg.appendChild(t);
+  });
+  const todayLine = svgEl('text',{x:W-10, y:20, 'text-anchor':'end', 'font-size':'11', 'font-weight':700}); todayLine.textContent=`סה"כ: ${maxKm} ק"מ`; svg.appendChild(todayLine);
+}
+
+function renderPackChart(){
+  const svg = document.getElementById('chartPack'); svg.innerHTML='';
+  const byWeek = {};
+  PLAN.forEach(d=>{ if(d.pack!=null) byWeek[d.weekNum]=Math.max(byWeek[d.weekNum]||0, d.pack); });
+  const data = Object.keys(byWeek).sort((a,b)=>a-b).map(k=>({week:Number(k), pack:byWeek[k]}));
+  const W=data.length*54+40, H=130;
+  svg.setAttribute('width', W); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const maxPack = Math.max(...data.map(d=>d.pack),1);
+  const styleColor = getComputedStyle(document.body);
+  data.forEach((d,i)=>{
+    const x=30+i*54;
+    const h = d.pack/maxPack*80;
+    svg.appendChild(svgEl('rect',{x, y:100-h, width:34, height:h, rx:6, fill: styleColor.getPropertyValue('--dusk')}));
+    const t1=svgEl('text',{x:x+17, y:114, 'text-anchor':'middle', 'font-size':'10'}); t1.textContent='ש'+d.week; svg.appendChild(t1);
+    const t2=svgEl('text',{x:x+17, y:94-h, 'text-anchor':'middle', 'font-size':'10', 'font-weight':700}); t2.textContent=d.pack+'ק"ג'; svg.appendChild(t2);
+  });
+}
+
+function renderBadges(){
+  const today = todayStr();
+  const doneKm = PLAN.filter(d=>isDone(d.date)).reduce((s,d)=>s+(PROGRESS[d.date]&&PROGRESS[d.date].km!=null? Number(PROGRESS[d.date].km) : (d.km||0)),0);
+  const pct = doneKm/TOTAL_KM*100;
+  // best week streak: any week fully completed (non-rest days)
+  const weeksNums = [...new Set(PLAN.map(d=>d.weekNum))];
+  const perfectWeek = weeksNums.some(w=>{
+    const days = PLAN.filter(d=>d.weekNum===w && d.type!=='rest');
+    return days.length>0 && days.every(d=>isDone(d.date));
+  });
+  // 7 day streak check (reuse readiness streak calc)
+  const r = computeReadiness(today>TARGET_DATE?TARGET_DATE:today);
+  const badges = [
+    {ico:'🥾', txt:'25% מהדרך', earned: pct>=25},
+    {ico:'⛰️', txt:'50% מהדרך', earned: pct>=50},
+    {ico:'🏔️', txt:'75% מהדרך', earned: pct>=75},
+    {ico:'🏁', txt:'מוכן ליציאה!', earned: pct>=100},
+    {ico:'🔥', txt:'רצף 7 ימים', earned: false},
+    {ico:'📅', txt:'שבוע מושלם', earned: perfectWeek}
+  ];
+  // recompute streak >=7 flag properly
+  let streak=0, cursor=today;
+  for(let i=0;i<90;i++){ const d=PLAN_MAP[cursor]; if(!d) break; if(d.type==='rest'){cursor=addDays(cursor,-1); continue;} if(isDone(cursor)){streak++; cursor=addDays(cursor,-1);} else break; }
+  badges[4].earned = streak>=7;
+
+  document.getElementById('badgeGrid').innerHTML = badges.map(b=>`<div class="badge ${b.earned?'earned':''}"><div class="ico">${b.ico}</div><div class="txt">${b.txt}</div></div>`).join('');
+}
+
+/* ================= INIT ================= */
+function renderAll(){ renderHome(); renderCalendar(); renderCharts(); }
+renderAll();
+</script>
+</body>
+</html>
