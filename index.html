@@ -227,6 +227,19 @@ svg text{font-family:'Heebo',sans-serif; fill:var(--ink);}
       <div class="cal-grid" id="calGrid"></div>
       <div class="legend" id="calLegend"></div>
     </div>
+
+    <div class="card">
+      <div class="cal-nav">
+        <button class="cbtn" onclick="weekShift(-1)">‹</button>
+        <h2 style="margin:0;">📋 תוכנית שבועית</h2>
+        <button class="cbtn" onclick="weekShift(1)">›</button>
+      </div>
+      <div style="text-align:center; margin-bottom:10px;">
+        <select id="weekPicker" onchange="renderWeekPlan(Number(this.value))" style="padding:8px 14px; border-radius:10px; border:1px solid var(--line); background:var(--paper-2); color:var(--ink); font-family:inherit; font-size:14px;"></select>
+      </div>
+      <div id="weekPlanRange" style="text-align:center; font-size:12.5px; color:var(--muted); margin-bottom:10px;"></div>
+      <div class="week-list" id="weekPlanList"></div>
+    </div>
   </div>
 
   <!-- STATS -->
@@ -295,61 +308,162 @@ function dowName(dateStr){ return HDOW[new Date(dateStr+"T00:00:00").getDay()]; 
 const TARGET_DATE = "2026-11-12";
 const PLAN_START = "2026-07-27";
 
-function mkWeek(n, start, o){
-  const items = [
-    {off:0, type:'walk', title:'הליכה מהירה', km:o.mon, hr:'120–135'},
-    {off:1, type:'strength', title:'אימון כוח'+(o.recovery?' (קל)':''), duration:o.strengthDur||45},
-    {off:2, type:'climb', title:o.wedTitle||'עליות / מדרגות', duration:o.wedDur},
-    {off:3, type:'rest', title:'מנוחה'},
-    {off:4, type:'walk', title:'הליכה', km:o.fri, climb:o.friClimb, pack:o.pack},
-    {off:5, type:'trail', title:'שטח', km:o.sat, climb:o.satClimb, pack:o.pack},
-    {off:6, type:'recovery', title:'התאוששות', duration:20, note:'מתיחות'}
-  ];
-  return items.map(it=>{
-    const day = {...it};
-    day.weekNum = n; day.date = addDays(start, it.off); day.recoveryWeek = !!o.recovery;
-    return day;
-  });
-}
+function d(w, date, type, title, extra){ return Object.assign({weekNum:w, date, type, title}, extra||{}); }
 
-let PLAN = [];
-PLAN = PLAN.concat(mkWeek(1,"2026-07-27",{mon:6, wedTitle:'מדרגות', wedDur:30, fri:8, sat:12, satClimb:200, pack:0}));
-PLAN = PLAN.concat(mkWeek(2,"2026-08-03",{mon:7, wedTitle:'מדרגות', wedDur:35, fri:9, sat:14, satClimb:250, pack:0}));
-PLAN = PLAN.concat(mkWeek(3,"2026-08-10",{mon:8, wedTitle:'עליות', wedDur:40, fri:10, sat:16, satClimb:300, pack:0}));
-PLAN = PLAN.concat(mkWeek(4,"2026-08-17",{mon:6, wedTitle:'מדרגות', wedDur:30, fri:8, sat:12, satClimb:200, pack:0, recovery:true, strengthDur:30}));
-PLAN = PLAN.concat(mkWeek(5,"2026-08-24",{mon:8, wedTitle:'עליות', wedDur:35, fri:10, sat:14, satClimb:300, pack:3}));
-PLAN = PLAN.concat(mkWeek(6,"2026-08-31",{mon:8, wedTitle:'עליות', wedDur:40, fri:11, sat:17, satClimb:350, pack:3}));
-PLAN = PLAN.concat(mkWeek(7,"2026-09-07",{mon:9, wedTitle:'עליות', wedDur:45, fri:12, sat:19, satClimb:400, pack:5}));
-PLAN = PLAN.concat(mkWeek(8,"2026-09-14",{mon:7, wedTitle:'עליות', wedDur:30, fri:9,  sat:14, satClimb:300, pack:5, recovery:true, strengthDur:30}));
-PLAN = PLAN.concat(mkWeek(9,"2026-09-21",{mon:9, wedTitle:'עליות', wedDur:45, fri:13, sat:20, satClimb:450, pack:6}));
-PLAN = PLAN.concat(mkWeek(10,"2026-09-28",{mon:9, wedTitle:'עליות', wedDur:50, fri:13, sat:22, satClimb:500, pack:6}));
-PLAN = PLAN.concat(mkWeek(11,"2026-10-05",{mon:8, wedTitle:'עליות', wedDur:45, fri:22, friClimb:700, sat:16, pack:7}));
-PLAN = PLAN.concat(mkWeek(12,"2026-10-12",{mon:6, wedTitle:'עליות', wedDur:35, fri:18, friClimb:600, sat:14, pack:7, recovery:true, strengthDur:30}));
-PLAN = PLAN.concat(mkWeek(13,"2026-10-19",{mon:9, wedTitle:'עליות', wedDur:50, fri:25, friClimb:850, sat:19, pack:8}));
-PLAN = PLAN.concat(mkWeek(14,"2026-10-26",{mon:9, wedTitle:'עליות', wedDur:50, fri:26, friClimb:900, sat:20, pack:9}));
+const WEEK_THEME = {
+  1:'כניסה לשגרה', 2:'בניית בסיס', 3:'סבולת', 4:'שבוע התאוששות', 5:'העלאת נפח',
+  6:'התחלת עבודה עם תיק', 7:'סבולת', 8:'התאוששות', 9:'שטח', 10:'עליות ארוכות',
+  11:'מסלול אמיתי', 12:'התאוששות', 13:'סימולציה 1', 14:'סימולציה 2', 15:'שיא', 16:'הורדת עומס'
+};
+const RECOVERY_WEEKS = [4,8,12];
 
-// Week 15 — final simulation (2–8/11)
-PLAN = PLAN.concat([
-  {weekNum:15, date:"2026-11-02", type:'taper', title:'הליכה קלה', km:5},
-  {weekNum:15, date:"2026-11-03", type:'strength', title:'כוח קל', duration:25},
-  {weekNum:15, date:"2026-11-04", type:'rest', title:'מנוחה / ניידות'},
-  {weekNum:15, date:"2026-11-05", type:'rest', title:'מנוחה'},
-  {weekNum:15, date:"2026-11-06", type:'simulation', title:'סימולציה — יום 1', km:30, climb:1000, pack:10},
-  {weekNum:15, date:"2026-11-07", type:'simulation', title:'סימולציה — יום 2', km:20, pack:10},
-  {weekNum:15, date:"2026-11-08", type:'recovery', title:'התאוששות מלאה', note:'מתיחות + שינה'}
-]);
+let PLAN = [
+  // שבוע 1 — כניסה לשגרה
+  d(1,"2026-07-27",'walk','הליכה מהירה',{km:6, hr:'120–135'}),
+  d(1,"2026-07-28",'strength','אימון כוח',{duration:45}),
+  d(1,"2026-07-29",'climb','מדרגות',{duration:30}),
+  d(1,"2026-07-30",'rest','מנוחה'),
+  d(1,"2026-07-31",'walk','הליכה',{km:8}),
+  d(1,"2026-08-01",'trail','שטח',{km:12, climb:200}),
+  d(1,"2026-08-02",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
 
-// Week 16 — exit week (9–12/11, partial)
-PLAN = PLAN.concat([
-  {weekNum:16, date:"2026-11-09", type:'taper', title:'הליכה קלה', km:5},
-  {weekNum:16, date:"2026-11-10", type:'rest', title:'מנוחה + מתיחות'},
-  {weekNum:16, date:"2026-11-11", type:'rest', title:'ניידות קלה + שתייה מרובה'},
-  {weekNum:16, date:"2026-11-12", type:'depart', title:'🎒 יציאה למסלול — ים אל ים!', note:'בהצלחה!'}
-]);
+  // שבוע 2 — בניית בסיס
+  d(2,"2026-08-03",'walk','הליכה מהירה',{km:7}),
+  d(2,"2026-08-04",'strength','אימון כוח',{duration:45}),
+  d(2,"2026-08-05",'climb','מדרגות',{duration:35}),
+  d(2,"2026-08-06",'rest','מנוחה'),
+  d(2,"2026-08-07",'walk','הליכה',{km:8}),
+  d(2,"2026-08-08",'trail','שטח',{km:14, climb:250}),
+  d(2,"2026-08-09",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 3 — סבולת
+  d(3,"2026-08-10",'walk','הליכה מהירה',{km:7}),
+  d(3,"2026-08-11",'strength','אימון כוח',{duration:45}),
+  d(3,"2026-08-12",'climb','עליות',{duration:40}),
+  d(3,"2026-08-13",'rest','מנוחה'),
+  d(3,"2026-08-14",'walk','הליכה',{km:10}),
+  d(3,"2026-08-15",'trail','שטח',{km:15, climb:280}),
+  d(3,"2026-08-16",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 4 — שבוע התאוששות
+  d(4,"2026-08-17",'walk','הליכה מהירה',{km:6}),
+  d(4,"2026-08-18",'strength','אימון כוח (קל)',{duration:30}),
+  d(4,"2026-08-19",'climb','מדרגות',{duration:30}),
+  d(4,"2026-08-20",'rest','מנוחה'),
+  d(4,"2026-08-21",'walk','הליכה',{km:8}),
+  d(4,"2026-08-22",'trail','שטח',{km:12, climb:200}),
+  d(4,"2026-08-23",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 5 — העלאת נפח
+  d(5,"2026-08-24",'walk','הליכה מהירה',{km:8}),
+  d(5,"2026-08-25",'strength','אימון כוח',{duration:45}),
+  d(5,"2026-08-26",'climb','עליות',{duration:45}),
+  d(5,"2026-08-27",'rest','מנוחה'),
+  d(5,"2026-08-28",'walk','הליכה',{km:10}),
+  d(5,"2026-08-29",'trail','שטח',{km:16, climb:320}),
+  d(5,"2026-08-30",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 6 — התחלת עבודה עם תיק
+  d(6,"2026-08-31",'walk','הליכה מהירה',{km:8, pack:3}),
+  d(6,"2026-09-01",'strength','אימון כוח',{duration:45}),
+  d(6,"2026-09-02",'climb','מדרגות',{duration:45}),
+  d(6,"2026-09-03",'rest','מנוחה'),
+  d(6,"2026-09-04",'walk','הליכה',{km:12, pack:3}),
+  d(6,"2026-09-05",'trail','שטח',{km:18, climb:380, pack:3}),
+  d(6,"2026-09-06",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 7 — סבולת
+  d(7,"2026-09-07",'walk','הליכה מהירה',{km:10}),
+  d(7,"2026-09-08",'strength','אימון כוח',{duration:45}),
+  d(7,"2026-09-09",'climb','עליות',{duration:50}),
+  d(7,"2026-09-10",'rest','מנוחה'),
+  d(7,"2026-09-11",'walk','הליכה',{km:12, pack:3}),
+  d(7,"2026-09-12",'trail','שטח',{km:20, climb:420, pack:3}),
+  d(7,"2026-09-13",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 8 — התאוששות
+  d(8,"2026-09-14",'walk','הליכה מהירה',{km:8}),
+  d(8,"2026-09-15",'strength','אימון כוח (קל)',{duration:30}),
+  d(8,"2026-09-16",'climb','עליות',{duration:35}),
+  d(8,"2026-09-17",'rest','מנוחה'),
+  d(8,"2026-09-18",'walk','הליכה',{km:10, pack:3}),
+  d(8,"2026-09-19",'trail','שטח',{km:16, climb:320, pack:3}),
+  d(8,"2026-09-20",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 9 — שטח
+  d(9,"2026-09-21",'walk','הליכה מהירה',{km:10}),
+  d(9,"2026-09-22",'strength','אימון כוח',{duration:45}),
+  d(9,"2026-09-23",'climb','שטח עם תיק',{duration:50, pack:5}),
+  d(9,"2026-09-24",'rest','מנוחה'),
+  d(9,"2026-09-25",'walk','הליכה',{km:12, pack:5}),
+  d(9,"2026-09-26",'trail','שטח',{km:22, climb:460, pack:5}),
+  d(9,"2026-09-27",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 10 — עליות ארוכות
+  d(10,"2026-09-28",'walk','הליכה מהירה',{km:10}),
+  d(10,"2026-09-29",'strength','אימון כוח',{duration:45}),
+  d(10,"2026-09-30",'climb','עליות',{duration:60}),
+  d(10,"2026-10-01",'rest','מנוחה'),
+  d(10,"2026-10-02",'walk','הליכה',{km:14, pack:5}),
+  d(10,"2026-10-03",'trail','שטח',{km:24, climb:500, pack:5}),
+  d(10,"2026-10-04",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 11 — מסלול אמיתי
+  d(11,"2026-10-05",'walk','הליכה מהירה',{km:12}),
+  d(11,"2026-10-06",'strength','אימון כוח',{duration:45}),
+  d(11,"2026-10-07",'climb','שטח',{duration:60, pack:5}),
+  d(11,"2026-10-08",'rest','מנוחה'),
+  d(11,"2026-10-09",'walk','הליכה',{km:14, pack:5}),
+  d(11,"2026-10-10",'trail','שטח',{km:26, climb:550, pack:5}),
+  d(11,"2026-10-11",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 12 — התאוששות
+  d(12,"2026-10-12",'walk','הליכה מהירה',{km:8}),
+  d(12,"2026-10-13",'strength','אימון כוח (קל)',{duration:30}),
+  d(12,"2026-10-14",'climb','עליות',{duration:40}),
+  d(12,"2026-10-15",'rest','מנוחה'),
+  d(12,"2026-10-16",'walk','הליכה',{km:10, pack:5}),
+  d(12,"2026-10-17",'trail','שטח',{km:18, climb:380, pack:5}),
+  d(12,"2026-10-18",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 13 — סימולציה 1
+  d(13,"2026-10-19",'walk','הליכה מהירה',{km:10}),
+  d(13,"2026-10-20",'strength','אימון כוח',{duration:45}),
+  d(13,"2026-10-21",'climb','עליות',{duration:50}),
+  d(13,"2026-10-22",'rest','מנוחה'),
+  d(13,"2026-10-23",'trail','שטח — סימולציה',{km:22, climb:700, pack:7}),
+  d(13,"2026-10-24",'trail','שטח — סימולציה',{km:16, climb:350, pack:7}),
+  d(13,"2026-10-25",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 14 — סימולציה 2
+  d(14,"2026-10-26",'walk','הליכה מהירה',{km:10}),
+  d(14,"2026-10-27",'strength','אימון כוח',{duration:45}),
+  d(14,"2026-10-28",'climb','עליות',{duration:50}),
+  d(14,"2026-10-29",'rest','מנוחה'),
+  d(14,"2026-10-30",'trail','שטח — סימולציה',{km:26, climb:900, pack:8}),
+  d(14,"2026-10-31",'trail','שטח — סימולציה',{km:18, climb:400, pack:8}),
+  d(14,"2026-11-01",'recovery','התאוששות',{duration:20, note:'מתיחות'}),
+
+  // שבוע 15 — שיא (סימולציה סופית ביום ה'-ו')
+  d(15,"2026-11-02",'taper','הליכה קלה',{km:8}),
+  d(15,"2026-11-03",'strength','אימון כוח (קל)',{duration:25}),
+  d(15,"2026-11-04",'rest','מנוחה'),
+  d(15,"2026-11-05",'simulation','סימולציה — יום 1',{km:30, climb:1000, pack:10}),
+  d(15,"2026-11-06",'simulation','סימולציה — יום 2',{km:20, pack:10}),
+  d(15,"2026-11-07",'recovery','התאוששות מלאה',{note:'מתיחות + שינה'}),
+  d(15,"2026-11-08",'rest','מנוחה'),
+
+  // שבוע 16 — הורדת עומס (שבוע יציאה, חלקי)
+  d(16,"2026-11-09",'taper','הליכה קלה',{km:5}),
+  d(16,"2026-11-10",'recovery','מתיחות',{note:'גמישות ומנוחה'}),
+  d(16,"2026-11-11",'rest','מנוחה'),
+  d(16,"2026-11-12",'depart','🎒 יציאה למסלול — ים אל ים!',{note:'בהצלחה!'})
+];
+PLAN.forEach(day=>{ day.recoveryWeek = RECOVERY_WEEKS.includes(day.weekNum); });
 
 const PLAN_MAP = {};
-PLAN.forEach(d=>PLAN_MAP[d.date]=d);
-const TOTAL_KM = PLAN.reduce((s,d)=>s+(d.km||0),0);
+PLAN.forEach(dd=>PLAN_MAP[dd.date]=dd);
+const TOTAL_KM = PLAN.reduce((s,dd)=>s+(dd.km||0),0);
 
 const TYPE_LABEL = {walk:'הליכה',strength:'כוח',climb:'עליות',rest:'מנוחה',trail:'שטח',recovery:'התאוששות',simulation:'סימולציה',taper:'שימור',depart:'יציאה'};
 const TYPE_ICON = {walk:'🚶',strength:'💪',climb:'🧗',rest:'😴',trail:'🥾',recovery:'🧘',simulation:'🏔',taper:'🌿',depart:'🎒'};
@@ -385,7 +499,7 @@ function switchTab(name){
   document.getElementById('screen-'+name).classList.add('active');
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
   if(name==='stats') renderCharts();
-  if(name==='cal') renderCalendar();
+  if(name==='cal'){ renderCalendar(); initWeekPicker(); }
 }
 
 /* ================= HOME RENDER ================= */
@@ -412,7 +526,7 @@ function renderHome(){
   // week overview
   const wk = next.weekNum;
   const weekDays = PLAN.filter(d=>d.weekNum===wk);
-  document.getElementById('weekRangeLabel').textContent = weekDays.length? `${fmtDate(weekDays[0].date)}–${fmtDate(weekDays[weekDays.length-1].date)}` : '';
+  document.getElementById('weekRangeLabel').textContent = weekDays.length? `${fmtDate(weekDays[0].date)}–${fmtDate(weekDays[weekDays.length-1].date)} · ${WEEK_THEME[wk]||''}` : '';
   document.getElementById('weekList').innerHTML = weekDays.map(d=>{
     const done = isDone(d.date);
     return `<div class="row" onclick="openDay('${d.date}')">
@@ -440,6 +554,42 @@ function renderHome(){
   document.getElementById('packWeightSub').textContent = pack===0? 'עדיין ללא תיק (שבועות 1–4)' : (pack>=10? 'משקל מלא של המסלול' : `שלב נוכחי בהדרגה לקראת ~10 ק"ג`);
 }
 
+/* ================= ADD TO CALENDAR (single workout) ================= */
+function pad2(n){ return n<10? '0'+n : ''+n; }
+function icsFmt(dt){ return dt.getFullYear()+pad2(dt.getMonth()+1)+pad2(dt.getDate())+'T'+pad2(dt.getHours())+pad2(dt.getMinutes())+'00'; }
+function downloadWorkoutICS(dateStr){
+  const day = PLAN_MAP[dateStr];
+  if(!day) return;
+  let durH = 1;
+  const est = estimateDuration(day);
+  if(est){ const m = est.match(/(\d+):(\d{2})/); if(m) durH = Number(m[1]) + Number(m[2])/60; }
+  else if(day.duration){ durH = day.duration/60; }
+  durH = Math.max(0.5, durH);
+  const start = new Date(dateStr+"T06:30:00");
+  const end = new Date(start.getTime() + durH*3600*1000);
+  const descParts = [goalText(day)];
+  if(activityList(day).length) descParts.push('מה לעשות: ' + activityList(day).join('; '));
+  const desc = descParts.join('\\n').replace(/,/g,'\\,');
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Trail Trainer//HE','CALSCALE:GREGORIAN',
+    'BEGIN:VEVENT',
+    'UID:trailtrainer-'+dateStr+'@yamalyam',
+    'DTSTART:'+icsFmt(start),
+    'DTEND:'+icsFmt(end),
+    'SUMMARY:'+TYPE_ICON[day.type]+' '+day.title+' — ים אל ים אימון',
+    'DESCRIPTION:'+desc,
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:תזכורת אימון','TRIGGER:-PT30M','END:VALARM',
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'trailtrainer-'+dateStr+'.ics';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast('קובץ נשמר — פתח אותו כדי להוסיף ליומן 📅');
+}
+
 function renderNextCard(d){
   const rows = [];
   if(d.km) rows.push(row('🚶 מרחק', d.km+' ק"מ'));
@@ -452,7 +602,8 @@ function renderNextCard(d){
   return `<h2>🎯 האימון הבא <small>${dowName(d.date)} ${fmtDate(d.date)}</small></h2>
     <div class="chip type-${d.type}" style="margin-bottom:8px;">${TYPE_ICON[d.type]} ${d.title}</div>
     <table style="width:100%; border-collapse:collapse;">${rows.join('')}</table>
-    <div class="btn ${done?'ghost':''}" onclick="openDay('${d.date}')">${done? '✔ בוצע — צפייה' : '▶ סמן כבוצע'}</div>`;
+    <div class="btn ${done?'ghost':''}" onclick="openDay('${d.date}')">${done? '✔ בוצע — צפייה' : '▶ סמן כבוצע'}</div>
+    <div class="btn ghost" onclick="downloadWorkoutICS('${d.date}')">🔔 שמור תזכורת ליומן הטלפון</div>`;
   function row(l,v){ return `<tr><td style="padding:8px 0; border-bottom:1px solid var(--line); color:var(--muted);">${l}</td><td style="padding:8px 0; border-bottom:1px solid var(--line); text-align:left; font-weight:600;">${v}</td></tr>`; }
 }
 
@@ -662,6 +813,42 @@ function showToast(msg){
 let calCursor = new Date(todayStr()+"T00:00:00");
 if(calCursor < new Date(PLAN_START+"T00:00:00")) calCursor = new Date(PLAN_START+"T00:00:00");
 function calShift(n){ calCursor.setMonth(calCursor.getMonth()+n); renderCalendar(); }
+
+/* ---- weekly plan selector (bottom of calendar screen) ---- */
+let weekPickerInited = false;
+function initWeekPicker(){
+  const sel = document.getElementById('weekPicker');
+  if(!weekPickerInited){
+    const weekNums = [...new Set(PLAN.map(dd=>dd.weekNum))];
+    sel.innerHTML = weekNums.map(w=>`<option value="${w}">שבוע ${w} — ${WEEK_THEME[w]||''}</option>`).join('');
+    weekPickerInited = true;
+  }
+  const today = todayStr();
+  const curDay = PLAN_MAP[today];
+  const curWeek = curDay? curDay.weekNum : (today < PLAN_START? 1 : PLAN[PLAN.length-1].weekNum);
+  sel.value = curWeek;
+  renderWeekPlan(curWeek);
+}
+function weekShift(n){
+  const sel = document.getElementById('weekPicker');
+  const opts = Array.from(sel.options).map(o=>Number(o.value));
+  const idx = opts.indexOf(Number(sel.value));
+  const next = opts[Math.min(opts.length-1, Math.max(0, idx+n))];
+  sel.value = next;
+  renderWeekPlan(next);
+}
+function renderWeekPlan(weekNum){
+  const days = PLAN.filter(dd=>dd.weekNum===weekNum);
+  if(!days.length) return;
+  document.getElementById('weekPlanRange').textContent = `${fmtDate(days[0].date)}–${fmtDate(days[days.length-1].date)} · מטרת השבוע: ${WEEK_THEME[weekNum]||''}${days[0].recoveryWeek? ' 🌿':''}`;
+  document.getElementById('weekPlanList').innerHTML = days.map(dd=>{
+    const done = isDone(dd.date);
+    return `<div class="row" onclick="openDay('${dd.date}')">
+      <div class="label">${done?'✔':'⬜'} ${dowName(dd.date)} <span class="chip type-${dd.type}">${TYPE_ICON[dd.type]} ${dd.title}</span></div>
+      <div class="val">${dd.km? dd.km+' ק"מ' : (dd.duration? dd.duration+' דק׳' : '')}</div>
+    </div>`;
+  }).join('');
+}
 
 function renderCalendar(){
   const y=calCursor.getFullYear(), m=calCursor.getMonth();
