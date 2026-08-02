@@ -1,37 +1,35 @@
-const CACHE_NAME = 'trail-trainer-v1'; // שנה את המספר (למשל v2) בכל פעם שאתה מעדכן את האתר
+// Trail Trainer — Service Worker
+// אסטרטגיה: Network-first (תמיד מנסה לגרוף גרסה טרייה מהרשת),
+// עם נפילה לגרסה השמורה ב-cache אם אין רשת (מצב אופליין).
+// skipWaiting + clients.claim -> עדכונים נכנסים לתוקף מיד, בלי צורך לסגור את הדפדפן.
 
-// בדיקת עדכונים מול השרת בכל פעם שהאתר נפתח
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request)
-      .then((networkResponse) => {
-        // אם יש אינטרנט והקובץ העדכני ירד בהצלחה, נשמור אותו בזיכרון
-        if (networkResponse.status === 200) {
-          const responseClone = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseClone);
-          });
-        }
-        return networkResponse;
-      })
-      .catch(() => {
-        // אם המשתמש באופליין (אין אינטרנט), נטען מהזיכרון של המכשיר
-        return caches.match(event.request);
-      })
+const CACHE_NAME = 'trail-trainer-v1';
+const URLS_TO_CACHE = ['./', './index.html'];
+
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(URLS_TO_CACHE))
   );
 });
 
-// מחיקת זיכרון ישן כשהגרסה משתנה
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request)
+      .then((res) => {
+        const resClone = res.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, resClone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
